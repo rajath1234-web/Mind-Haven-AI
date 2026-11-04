@@ -1,0 +1,488 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MindHaven AI – Architecture Blueprint</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --primary: #3b82d4;
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    --purple: #7c3aed;
+    --teal: #0d9488;
+    --text: #1e293b;
+    --muted: #64748b;
+    --label: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13.5px;
+    line-height: 1.6;
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 2.5rem; }
+  .header h1 { font-size: 1.7rem; font-weight: 700; color: var(--text); }
+  .header h1 span { color: var(--primary); }
+  .header p { color: var(--muted); margin-top: .35rem; font-size: .9rem; }
+  .badge {
+    display: inline-block; font-size: .7rem; font-weight: 600;
+    padding: .2em .65em; border-radius: 999px;
+    margin-left: .4rem; vertical-align: middle;
+  }
+  .badge-blue   { background: #dbeafe; color: #1e40af; }
+  .badge-green  { background: #dcfce7; color: #166534; }
+  .badge-red    { background: #fee2e2; color: #991b1b; }
+  .badge-amber  { background: #fef3c7; color: #92400e; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--label);
+    margin-bottom: .75rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Layout helpers ── */
+  .row { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .col { flex: 1; min-width: 240px; }
+  .col-2 { flex: 2; min-width: 320px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+  }
+  .card.accent-blue   { border-left: 4px solid var(--primary); }
+  .card.accent-green  { border-left: 4px solid var(--green); }
+  .card.accent-red    { border-left: 4px solid var(--red); }
+  .card.accent-amber  { border-left: 4px solid var(--amber); }
+  .card.accent-purple { border-left: 4px solid var(--purple); }
+  .card.accent-teal   { border-left: 4px solid var(--teal); }
+
+  .card h3 {
+    font-size: .88rem; font-weight: 700; margin-bottom: .55rem; color: var(--text);
+  }
+  .card p { color: var(--muted); font-size: .82rem; margin-bottom: .4rem; }
+  .card ul { padding-left: 1.1rem; color: var(--muted); font-size: .82rem; }
+  .card ul li { margin-bottom: .25rem; }
+
+  /* ── Flow diagram ── */
+  .flow {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-bottom: .6rem;
+  }
+  .flow-row:last-child { margin-bottom: 0; }
+  .node {
+    border-radius: 8px;
+    padding: .45rem .9rem;
+    font-size: .78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.3;
+  }
+  .node-input   { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+  .node-filter  { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  .node-orch    { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+  .node-agent1  { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+  .node-agent2  { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .node-groq    { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .node-output  { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+  .node-emergency { background: #fee2e2; color: #991b1b; border: 2px solid #f87171; }
+  .arrow { color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+  .flow-label { font-size: .72rem; color: var(--muted); font-style: italic; margin-left: .2rem; }
+  .flow-indent { padding-left: 2.2rem; }
+
+  /* ── Data table ── */
+  table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  th {
+    text-align: left; padding: .55rem .75rem;
+    font-weight: 600; color: var(--muted); font-size: .75rem;
+    background: #f8fafc; border-bottom: 1px solid var(--border);
+  }
+  td { padding: .5rem .75rem; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  td code {
+    background: #f1f5f9; border-radius: 4px;
+    padding: .1em .4em; font-size: .8rem; color: var(--purple);
+    font-family: "Cascadia Code", "Fira Mono", monospace;
+  }
+
+  /* ── Stack pills ── */
+  .pill-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+  .pill {
+    border-radius: 999px; padding: .2em .75em;
+    font-size: .75rem; font-weight: 600;
+    border: 1px solid var(--border); color: var(--text);
+    background: #f8fafc;
+  }
+
+  /* ── Safety section ── */
+  .kw-list { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
+  .kw {
+    border-radius: 4px; padding: .15em .6em; font-size: .75rem;
+  }
+  .kw-high { background: #fee2e2; color: #991b1b; }
+  .kw-mod  { background: #fef3c7; color: #92400e; }
+
+  /* ── Session box ── */
+  .session-box {
+    background: #f8fafc; border: 1px dashed #cbd5e1;
+    border-radius: 8px; padding: .75rem 1rem; font-size: .8rem; color: var(--muted);
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center; margin-top: 2.5rem; padding-top: 1rem;
+    border-top: 1px solid var(--border); font-size: .75rem; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+
+<div class="header">
+  <h1>MindHaven AI <span>–</span> Architecture Blueprint</h1>
+  <p>Mental Health Awareness &amp; Support Companion  ·  Flask + Groq API + Two AI Agents</p>
+</div>
+
+
+<div class="flow">
+  <div class="section-title">End-to-End Request Flow</div>
+
+  <div class="flow-row">
+    <div class="node node-input">Browser / User</div>
+    <div class="arrow">→</div>
+    <div class="node node-input">POST /api/chat<br /><span style="font-weight:400;font-size:.72rem">{ "message": "…" }</span></div>
+    <div class="arrow">→</div>
+    <div class="node node-filter">① Safety Filter<br /><code style="font-size:.7rem;background:none;color:inherit">assess_risk_level()</code></div>
+    <div class="arrow">→</div>
+    <div class="node node-orch">② Orchestrator<br /><code style="font-size:.7rem;background:none;color:inherit">orchestrate()</code></div>
+  </div>
+
+  <div class="flow-row flow-indent">
+    <div class="arrow" style="margin-left:.5rem">↓ risk_level = low / moderate / high</div>
+  </div>
+
+  <div class="flow-row flow-indent">
+    <div class="node node-agent1">③ Agent 1 – Empathetic Listener<br /><code style="font-size:.7rem;background:none;color:inherit">empathetic_listener_agent()</code></div>
+    <div class="arrow">→</div>
+    <div class="node node-groq">Groq API<br /><span style="font-size:.7rem;font-weight:400">LLaMA 3 8B</span></div>
+    <div class="arrow">→</div>
+    <div class="node node-output">listener_reply</div>
+  </div>
+
+  <div class="flow-row flow-indent">
+    <div class="node node-agent2">④ Agent 2 – Proactive Care Coach<br /><code style="font-size:.7rem;background:none;color:inherit">proactive_care_agent()</code></div>
+    <div class="arrow">→</div>
+    <div class="node node-groq">Groq API<br /><span style="font-size:.7rem;font-weight:400">LLaMA 3 8B</span></div>
+    <div class="arrow">→</div>
+    <div class="node node-output">care_reply</div>
+  </div>
+
+  <div class="flow-row flow-indent">
+    <div class="node node-emergency">⑤ If HIGH RISK → Emergency Referral Protocol<br /><span style="font-size:.7rem;font-weight:400">show_emergency = true · helplines[] injected</span></div>
+  </div>
+
+  <div class="flow-row" style="margin-top:.4rem">
+    <div class="node node-orch">Orchestrator assembles JSON response</div>
+    <div class="arrow">→</div>
+    <div class="node node-input">Browser renders bubbles:<br /><span style="font-size:.7rem;font-weight:400">Listener · Care · Risk Badge · (Helplines)</span></div>
+  </div>
+</div>
+
+
+<div class="section-title" style="margin-bottom:.75rem">System Layers</div>
+
+<div class="row">
+  
+  <div class="col">
+    <div class="card accent-blue">
+      <h3>🖥 Presentation Layer (Frontend)</h3>
+      <p>Inline HTML via <code>render_template_string()</code></p>
+      <ul>
+        <li>Bootstrap 5 + Bootstrap Icons (CDN)</li>
+        <li>Pastel CSS design system (custom properties)</li>
+        <li>Fixed sidebar with responsive mobile toggle</li>
+        <li>Vanilla JS <code>fetch()</code> for async chat</li>
+        <li>Typing indicator, risk badges, emergency table</li>
+        <li>Input sanitisation via <code>escapeHtml()</code></li>
+      </ul>
+      <div class="pill-row">
+        <span class="pill">Bootstrap 5.3</span>
+        <span class="pill">Vanilla JS</span>
+        <span class="pill">CSS Variables</span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="col">
+    <div class="card accent-purple">
+      <h3>🔀 Routing Layer (Flask)</h3>
+      <p>5 page routes + 2 API endpoints</p>
+      <table>
+        <tr><th>Route</th><th>Type</th></tr>
+        <tr><td><code>GET /</code></td><td>Dashboard</td></tr>
+        <tr><td><code>GET /chat</code></td><td>Chat UI</td></tr>
+        <tr><td><code>GET /resources</code></td><td>Coping tools</td></tr>
+        <tr><td><code>GET /help</code></td><td>Helplines</td></tr>
+        <tr><td><code>GET /about</code></td><td>About page</td></tr>
+        <tr><td><code>POST /api/chat</code></td><td>AI pipeline</td></tr>
+        <tr><td><code>POST /api/clear_chat</code></td><td>Reset session</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<div class="row">
+  <div class="col-2">
+    <div class="card accent-teal">
+      <h3>🤖 AI Agent Layer</h3>
+      <div class="row" style="margin-top:.5rem;gap:.75rem">
+        <div class="col" style="min-width:200px">
+          <p><strong>Agent 1 – Empathetic Listener</strong> <span class="badge badge-blue">Listener</span></p>
+          <ul>
+            <li>System prompt: warm, non-judgmental, active-listening persona</li>
+            <li>Context-aware: uses last 10 turns of session history</li>
+            <li>Temperature: 0.75 (expressive)</li>
+            <li>Appends mandatory professional-care disclaimer to every reply</li>
+            <li>Never diagnoses or prescribes</li>
+          </ul>
+        </div>
+        <div class="col" style="min-width:200px">
+          <p><strong>Agent 2 – Proactive Care Coach</strong> <span class="badge badge-green">Coach</span></p>
+          <ul>
+            <li>System prompt: evidence-based wellness coach persona</li>
+            <li>Receives risk_level context (low / moderate / high)</li>
+            <li>Temperature: 0.65 (focused, actionable)</li>
+            <li>Outputs 2–4 bullet-point coping suggestions</li>
+            <li>Tone adapts to severity: grounding → calming → preventive</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="row">
+  
+  <div class="col">
+    <div class="card accent-red">
+      <h3>🛡 Safety Filter Layer</h3>
+      <p><code>assess_risk_level(text)</code> — runs synchronously before any LLM call</p>
+      <p style="margin-top:.5rem"><strong>High-risk keywords (16):</strong></p>
+      <div class="kw-list">
+        <span class="kw kw-high">suicide</span>
+        <span class="kw kw-high">kill myself</span>
+        <span class="kw kw-high">self-harm</span>
+        <span class="kw kw-high">want to die</span>
+        <span class="kw kw-high">overdose</span>
+        <span class="kw kw-high">end my life</span>
+        <span class="kw kw-high">better off dead</span>
+        <span class="kw kw-high">+ 9 more</span>
+      </div>
+      <p style="margin-top:.6rem"><strong>Moderate-risk keywords (14):</strong></p>
+      <div class="kw-list">
+        <span class="kw kw-mod">hopeless</span>
+        <span class="kw kw-mod">depressed</span>
+        <span class="kw kw-mod">panic attack</span>
+        <span class="kw kw-mod">overwhelmed</span>
+        <span class="kw kw-mod">burnout</span>
+        <span class="kw kw-mod">lonely</span>
+        <span class="kw kw-mod">+ 8 more</span>
+      </div>
+      <p style="margin-top:.65rem;color:var(--red);font-weight:600;font-size:.8rem">
+        HIGH → immediately triggers emergency referral + 8 helplines
+      </p>
+    </div>
+  </div>
+
+  
+  <div class="col">
+    <div class="card accent-amber">
+      <h3>⚡ LLM Integration (Groq API)</h3>
+      <p><code>generate_response(messages, temperature)</code></p>
+      <table style="margin-top:.4rem">
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>Default model</td><td><code>llama3-8b-8192</code></td></tr>
+        <tr><td>Configurable via</td><td><code>GROQ_MODEL</code> env var</td></tr>
+        <tr><td>Max tokens</td><td><code>512</code></td></tr>
+        <tr><td>Agent 1 temp</td><td><code>0.75</code></td></tr>
+        <tr><td>Agent 2 temp</td><td><code>0.65</code></td></tr>
+        <tr><td>History window</td><td>Last 10 turns (20 messages max)</td></tr>
+        <tr><td>Fallback</td><td>Safe static message (no API key / error)</td></tr>
+      </table>
+      <div class="pill-row" style="margin-top:.65rem">
+        <span class="pill">llama3-8b-8192</span>
+        <span class="pill">llama3-70b-8192</span>
+        <span class="pill">mixtral-8x7b</span>
+        <span class="pill">gemma-7b-it</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="row">
+  
+  <div class="col">
+    <div class="card accent-blue">
+      <h3>💾 State Management</h3>
+      <p>No database. Flask server-side session only.</p>
+      <div class="session-box" style="margin-top:.5rem">
+        <code>session["chat_history"]</code> — list of dicts<br />
+        <code>{"role": "user"|"assistant", "content": "…"}</code><br /><br />
+        <strong>Bounded to last 20 messages</strong> to avoid token overflow.<br />
+        Cleared on <code>POST /api/clear_chat</code> or session expiry.
+      </div>
+      <p style="margin-top:.6rem">Privacy guarantee: nothing written to disk.</p>
+    </div>
+  </div>
+
+  
+  <div class="col">
+    <div class="card accent-green">
+      <h3>📦 Static Data Stores</h3>
+      <p>In-memory Python constants — no DB required.</p>
+      <ul>
+        <li><code>HELPLINES</code> — 8 verified crisis contacts (India, US, UK, AU, Global)</li>
+        <li><code>COPING_RESOURCES</code> — 6 evidence-based exercises (Breathing, Grounding, Journaling, Mindfulness, Movement, Self-Compassion)</li>
+        <li><code>HIGH_RISK_KEYWORDS</code> — 16 crisis-level terms</li>
+        <li><code>MODERATE_RISK_KEYWORDS</code> — 14 distress-level terms</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+<div class="section-title" style="margin-bottom:.75rem">Configuration (.env)</div>
+<div class="card" style="margin-bottom:1.25rem">
+  <table>
+    <tr>
+      <th>Variable</th><th>Default</th><th>Purpose</th>
+    </tr>
+    <tr>
+      <td><code>GROQ_API_KEY</code></td>
+      <td><em>required</em></td>
+      <td>Groq cloud API key — get free at console.groq.com</td>
+    </tr>
+    <tr>
+      <td><code>GROQ_MODEL</code></td>
+      <td><code>llama3-8b-8192</code></td>
+      <td>LLM model ID — swap for 70B, Mixtral, or Gemma</td>
+    </tr>
+    <tr>
+      <td><code>SECRET_KEY</code></td>
+      <td><code>mindhaven-secret-2024</code></td>
+      <td>Flask session signing key — change in production</td>
+    </tr>
+  </table>
+</div>
+
+
+<div class="section-title" style="margin-bottom:.75rem">UI Pages</div>
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h3>📊 Dashboard <span class="badge badge-blue">GET /</span></h3>
+      <p>Stat cards (agents, safety, helplines, exercises), agent introductions, quick-action buttons, disclaimer banner.</p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h3>💬 Safe Space Chat <span class="badge badge-green">GET /chat</span></h3>
+      <p>Dual-agent chat interface, typing indicator, risk badge per message, emergency helpline table on high-risk trigger.</p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h3>📖 Coping Resources <span class="badge badge-purple">GET /resources</span></h3>
+      <p>6 collapsible exercise cards with category tags, duration badges, and personalised support CTA.</p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h3>🆘 Get Help Now <span class="badge badge-red">GET /help</span></h3>
+      <p>Full helpline table, emergency services by country, online peer-support community links.</p>
+    </div>
+  </div>
+</div>
+
+
+<div class="section-title" style="margin-bottom:.75rem">Technology Stack</div>
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h3>Backend</h3>
+      <div class="pill-row">
+        <span class="pill">Python 3.10+</span>
+        <span class="pill">Flask 3.x</span>
+        <span class="pill">groq SDK</span>
+        <span class="pill">python-dotenv</span>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h3>Frontend</h3>
+      <div class="pill-row">
+        <span class="pill">Bootstrap 5.3</span>
+        <span class="pill">Bootstrap Icons</span>
+        <span class="pill">Vanilla JS (ES2020)</span>
+        <span class="pill">Fetch API</span>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h3>AI / LLM</h3>
+      <div class="pill-row">
+        <span class="pill">Groq Cloud API</span>
+        <span class="pill">LLaMA 3 8B</span>
+        <span class="pill">Free tier</span>
+        <span class="pill">Open-source model</span>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h3>Deployment</h3>
+      <div class="pill-row">
+        <span class="pill">Single file app.py</span>
+        <span class="pill">python app.py</span>
+        <span class="pill">Port 5000</span>
+        <span class="pill">No DB</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Made with IBM Bob</footer>
+</body>
+</html>
